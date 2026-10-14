@@ -431,6 +431,7 @@ namespace ai
 		void SaveFishLocations();
 
 		WorldPosition* GetFishSpot(WorldPosition start, bool onlyNearestGrid = false);
+        std::vector<WorldPosition> GetFishSpotsInRange(const WorldPosition& start, float maxDistance) const;
 
 		EntryDestinationMap GetExploreLocs() const { return destinationMap.at(TravelDestinationPurpose::Explore); };
 		void SetMobAvoidArea();
@@ -505,4 +506,3 @@ namespace ai
 }
 
 #define sTravelMgr MaNGOS::Singleton<TravelMgr>::Instance()
-

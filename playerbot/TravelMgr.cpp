@@ -2569,6 +2569,33 @@ WorldPosition* TravelMgr::GetFishSpot(WorldPosition start, bool onlyNearestGrid)
     return fishMap.GetNextPoint(start, chances);
 }
 
+std::vector<WorldPosition> TravelMgr::GetFishSpotsInRange(const WorldPosition& start, float maxDistance) const
+{
+    std::vector<WorldPosition> spots;
+    float maxDistanceSq = maxDistance * maxDistance;
+
+    for (const AsyncGuidPosition& fishPoint : fishPoints)
+    {
+        if (fishPoint.getMapId() != start.getMapId())
+            continue;
+
+        if (start.sqDistance(fishPoint) > maxDistanceSq)
+            continue;
+
+        if (!GetFishZone(fishPoint))
+            continue;
+
+        spots.emplace_back(fishPoint);
+    }
+
+    std::sort(spots.begin(), spots.end(), [&start](const WorldPosition& left, const WorldPosition& right)
+    {
+        return start.sqDistance(left) < start.sqDistance(right);
+    });
+
+    return spots;
+}
+
 DestinationList TravelMgr::GetDestinations(const PlayerTravelInfo& info, uint32 purposeFlag, const std::vector<int32>& entries, bool onlyPossible, float maxDistance) const
 {
     WorldPosition center = info.GetPosition();

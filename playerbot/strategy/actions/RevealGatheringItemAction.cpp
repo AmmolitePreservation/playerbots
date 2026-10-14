@@ -48,6 +48,11 @@ bool RevealGatheringItemAction::Execute(Event& event)
                 sServerFacade.IsDistanceLessOrEqualThan(sServerFacade.GetDistance2d(bot, go), sPlayerbotAIConfig.gatheringDistance))
             continue;
 
+        // A bot's temporary fishing bobber is not a gathering discovery. Do
+        // not announce it or ping the minimap every time somebody casts.
+        if (go->GetEntry() == 35591)
+            continue;
+
         if (LockEntry const *lockInfo = sLockStore.LookupEntry(go->GetGOInfo()->GetLockId()))
         {
             for (int i = 0; i < 8; ++i)

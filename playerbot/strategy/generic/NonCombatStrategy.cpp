@@ -2,8 +2,17 @@
 #include "playerbot/playerbot.h"
 #include "NonCombatStrategy.h"
 #include "playerbot/strategy/Value.h"
+#include "playerbot/strategy/actions/FishAction.h"
 
 using namespace ai;
+
+float FishActionMultiplier::GetValue(Action* action)
+{
+    if (!action || dynamic_cast<MoveToFishAction*>(action))
+        return 1.0f;
+
+    return dynamic_cast<MovementAction*>(action) ? 0.0f : 1.0f;
+}
 
 void NonCombatStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
 {
@@ -103,7 +112,30 @@ void FishStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
         "val::can open fishing dobber",
         NextAction::array(0, new NextAction("use fishing bobber", 99.0f), NULL)));
 
-    triggers.push_back(new TriggerNode(
-        "val::done fishing",
-        NextAction::array(0, new NextAction("equip upgrades", 6.0f), NULL)));
+    if (!modifier.empty())
+    {
+        triggers.push_back(new TriggerNode(
+            "val::done fishing",
+            NextAction::array(0, new NextAction("equip upgrades", 6.0f), NULL)));
+    }
+}
+
+void FishStrategy::OnStrategyAdded(BotState)
+{
+    ai->GetAiObjectContext()->GetValue<WorldPosition>("custom position", "fish spot")->Reset();
+
+    if (modifier.empty())
+        ai->StopMoving();
+}
+
+void FishStrategy::OnStrategyRemoved(BotState)
+{
+    if (modifier.empty())
+        ai->DoSpecificAction("equip upgrades", Event(), true);
+}
+
+void FishStrategy::InitNonCombatMultipliers(std::list<Multiplier*>& multipliers)
+{
+    if (modifier.empty())
+        multipliers.push_back(new FishActionMultiplier(ai));
 }

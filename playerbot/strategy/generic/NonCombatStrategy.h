@@ -3,6 +3,13 @@
 
 namespace ai
 {
+    class FishActionMultiplier : public Multiplier
+    {
+    public:
+        FishActionMultiplier(PlayerbotAI* ai) : Multiplier(ai, "fish action") {}
+        virtual float GetValue(Action* action) override;
+    };
+
     // TO DO: Remove this when no dependencies are left
     class NonCombatStrategy : public Strategy
     {
@@ -152,6 +159,9 @@ namespace ai
 #endif
     protected:
         virtual void InitNonCombatTriggers(std::list<TriggerNode*>& triggers) override;
+        virtual void InitNonCombatMultipliers(std::list<Multiplier*>& multipliers) override;
+        virtual void OnStrategyAdded(BotState state) override;
+        virtual void OnStrategyRemoved(BotState state) override;
         std::string modifier = "";
     };
 
