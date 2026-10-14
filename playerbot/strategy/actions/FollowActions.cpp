@@ -58,6 +58,11 @@ bool FollowAction::isUseful()
         }
     }
 
+    // Loot is picked by distance from the master, but the follow leash is the formation spot, so following mid-approach pulls the bot back before it loots.
+    LootObject loot = AI_VALUE(LootObject, "loot target");
+    if (loot.IsLootPossible(bot))
+        return false;
+
     if (followTarget)
     {
 #ifndef MANGOSBOT_ZERO

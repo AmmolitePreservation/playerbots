@@ -53,7 +53,7 @@ enum ProfessionSpells
 bool OpenLootAction::Execute(Event& event)
 {
     LootObject lootObject = AI_VALUE(LootObject, "loot target");
-    bool result = DoLoot(lootObject);
+    bool result = DoLoot(lootObject, event);
     if (result)
     {
         AI_VALUE(LootObjectStack*, "available loot")->Remove(lootObject.guid);
@@ -62,13 +62,22 @@ bool OpenLootAction::Execute(Event& event)
     return result;
 }
 
-bool OpenLootAction::DoLoot(LootObject& lootObject)
+bool OpenLootAction::DoLoot(LootObject& lootObject, Event& event)
 {
     if (lootObject.IsEmpty())
         return false;
 
+    // A seated bot (eating, drinking) finishes first unless a player ordered the loot; standing cancels the food or drink.
+    if (!bot->IsStandState())
+    {
+        if (!event.getOwner())
+            return false;
+
+        bot->SetStandState(UNIT_STAND_STATE_STAND);
+    }
+
     Creature* creature = ai->GetCreature(lootObject.guid);
-    if (creature && sServerFacade.GetDistance2d(bot, creature) > INTERACTION_DISTANCE)
+    if (creature && !LootObject::IsWithinLootRange(bot, creature))
         return false;
 
     if (creature && creature->HasFlag(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_LOOTABLE) && !creature->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_SKINNABLE))
@@ -112,7 +121,7 @@ bool OpenLootAction::DoLoot(LootObject& lootObject)
     }
 
     GameObject* go = ai->GetGameObject(lootObject.guid);
-    if (go && sServerFacade.GetDistance2d(bot, go) > INTERACTION_DISTANCE)
+    if (go && !LootObject::IsWithinLootRange(bot, go))
         return false;
 
     if (go && (go->IsInUse() || go->GetGoState() == GO_STATE_ACTIVE))
@@ -260,15 +269,15 @@ bool StoreLootAction::Execute(Event& event)
     uint32 gold = 0;
     uint8 items = 0;
 
+    // A 10-byte response is the core's loot error (guid, type 0, error code): nothing was opened.
+    if (p.size() <= 10)
+        return false;
+
     p.rpos(0);
     p >> guid;      // 8 corpse guid
     p >> loot_type; // 1 loot type
-
-    if (p.size() > 10)
-    {
-        p >> gold;      // 4 money on corpse
-        p >> items;     // 1 number of items on corpse
-    }
+    p >> gold;      // 4 money on corpse
+    p >> items;     // 1 number of items on corpse
 
     bot->SetLootGuid(guid);
 

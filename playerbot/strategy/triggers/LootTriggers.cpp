@@ -8,13 +8,12 @@ using namespace ai;
 
 bool LootAvailableTrigger::IsActive()
 {
-    return AI_VALUE(bool, "has available loot") &&
-            (
-                    sServerFacade.IsDistanceLessOrEqualThan(AI_VALUE2(float, "distance", "loot target"), INTERACTION_DISTANCE) ||
-                    AI_VALUE(std::list<ObjectGuid>, "all targets").empty()
-            ) &&
-            !AI_VALUE2(bool, "combat", "self target") &&
-            !AI_VALUE2(bool, "mounted", "self target");
+    if (!AI_VALUE(bool, "has available loot") || AI_VALUE2(bool, "combat", "self target") || AI_VALUE2(bool, "mounted", "self target"))
+        return false;
+
+    LootObject loot = AI_VALUE(LootObject, "loot target");
+    WorldObject* lootObject = loot.IsEmpty() ? nullptr : loot.GetWorldObject(bot);
+    return !lootObject || LootObject::IsWithinLootRange(bot, lootObject) || AI_VALUE(std::list<ObjectGuid>, "all targets").empty();
 }
 
 bool FarFromCurrentLootTrigger::IsActive()
@@ -24,7 +23,7 @@ bool FarFromCurrentLootTrigger::IsActive()
     if (!loot.IsLootPossible(bot))
         return false;
 
-    return AI_VALUE2(float, "distance", "loot target") > INTERACTION_DISTANCE;
+    return !LootObject::IsWithinLootRange(bot, loot.GetWorldObject(bot));
 }
 
 bool CanLootTrigger::IsActive()

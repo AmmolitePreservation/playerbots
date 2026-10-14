@@ -18,7 +18,7 @@ namespace ai
         virtual bool Execute(Event& event) override;
 
     private:
-        bool DoLoot(LootObject& lootObject);
+        bool DoLoot(LootObject& lootObject, Event& event);
         uint32 GetOpeningSpell(LootObject& lootObject);
         uint32 GetOpeningSpell(LootObject& lootObject, GameObject* go);
         bool CanOpenLock(LootObject& lootObject, const SpellEntry* pSpellInfo, GameObject* go);

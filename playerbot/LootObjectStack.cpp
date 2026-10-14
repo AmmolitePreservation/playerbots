@@ -211,6 +211,24 @@ WorldObject* LootObject::GetWorldObject(Player* bot)
     return NULL;
 }
 
+bool LootObject::IsWithinLootRange(Player* bot, WorldObject* target)
+{
+    return IsWithinLootRangeFrom(bot, target, bot->GetPositionX(), bot->GetPositionY(), bot->GetPositionZ());
+}
+
+// Corpses are opened with CMSG_LOOT, whose handler rejects anything outside this range as too far. Game objects are opened by spell.
+bool LootObject::IsWithinLootRangeFrom(Player* bot, WorldObject* target, float x, float y, float z)
+{
+    float dx = target->GetPositionX() - x;
+    float dy = target->GetPositionY() - y;
+    if (!target->isType(TYPEMASK_UNIT))
+        return sServerFacade.IsDistanceLessOrEqualThan(sqrt(dx * dx + dy * dy), INTERACTION_DISTANCE);
+
+    float dz = target->GetPositionZ() - z;
+    float range = std::max(INTERACTION_DISTANCE, target->GetCombatReach() + (4.0f / 3.0f) + bot->GetCombatReach());
+    return dx * dx + dy * dy + dz * dz <= range * range;
+}
+
 LootObject::LootObject(const LootObject& other)
 {
     guid = other.guid;
@@ -242,7 +260,7 @@ bool LootObject::IsLootPossible(Player* bot)
 
     AiObjectContext* context = ai->GetAiObjectContext();
 
-    if (!AI_VALUE2_LAZY(bool, "should loot object", std::to_string(guid.GetRawValue())))
+    if (!AI_VALUE2(bool, "should loot object", std::to_string(guid.GetRawValue())))
         return false;
 
     // Check if the game object has quest loot and bot has the quest for it
@@ -353,9 +371,24 @@ LootObject LootObjectStack::GetLoot(float maxDistance)
     return ordered.empty() ? LootObject() : *ordered.begin();
 }
 
+float LootObjectStack::GetPickDistance(Player* bot)
+{
+    PlayerbotAI* ai = bot->GetPlayerbotAI();
+    if (!bot->GetGroup() || ai->IsGroupLeader())
+        return sPlayerbotAIConfig.lootDistance;
+
+    if (ai->HasActivePlayerMaster())
+        return sPlayerbotAIConfig.groupMemberLootDistanceWithActiveMaster;
+
+    return sPlayerbotAIConfig.groupMemberLootDistance;
+}
+
 std::vector<LootObject> LootObjectStack::OrderByDistance(float maxDistance)
 {
     availableLoot.shrink(time(0) - 30);
+
+    Player* master = bot->GetPlayerbotAI()->GetMaster();
+    float pickDistance = GetPickDistance(bot);
 
     std::map<float, LootObject> sortedMap;
     LootTargetList safeCopy(availableLoot);
@@ -366,7 +399,13 @@ std::vector<LootObject> LootObjectStack::OrderByDistance(float maxDistance)
         if (!lootObject.IsLootPossible(bot))
             continue;
 
-        float distance = bot->GetDistance(lootObject.GetWorldObject(bot));
+        WorldObject* wo = lootObject.GetWorldObject(bot);
+
+        // Kills and attack targets enter the stack without the pick distance check that scanned loot gets.
+        if (master && master != bot && (!master->IsInMap(wo) || sServerFacade.IsDistanceGreaterThan(sServerFacade.GetDistance2d(master, wo), pickDistance)))
+            continue;
+
+        float distance = bot->GetDistance(wo);
         if (!maxDistance || distance <= maxDistance)
             sortedMap[distance] = lootObject;
     }

@@ -1368,6 +1368,17 @@ bool PlayerbotAI::IsAllowedCommand(std::string text)
     return false;
 }
 
+static bool IsLootOrUseCommand(const std::string& command)
+{
+    for (const std::string order : { "loot", "add all loot", "u", "use" })
+    {
+        if (command == order || command.rfind(order + " ", 0) == 0)
+            return true;
+    }
+
+    return false;
+}
+
 void PlayerbotAI::HandleCommand(uint32 type, const std::string& text, Player& fromPlayer, const uint32 lang)
 {
     std::string filtered = text;
@@ -1526,6 +1537,10 @@ void PlayerbotAI::HandleCommand(uint32 type, const std::string& text, Player& fr
     }
     else
     {
+        // Eating or drinking holds the AI for the whole meal, so a loot or use order would otherwise wait until it ends.
+        if (bot->IsSitState() && IsLootOrUseCommand(filtered))
+            ResetAIInternalUpdateDelay();
+
         ChatCommandHolder cmd(filtered, &fromPlayer, type);
         chatCommands.push(cmd);
     }

@@ -17,6 +17,8 @@ namespace ai
         bool IsLootPossible(Player* bot);
         void Refresh(Player* bot, ObjectGuid guid, bool debug = false);
         WorldObject* GetWorldObject(Player* bot);
+        static bool IsWithinLootRange(Player* bot, WorldObject* target);
+        static bool IsWithinLootRangeFrom(Player* bot, WorldObject* target, float x, float y, float z);
         ObjectGuid guid;
 
         uint32 skillId;
@@ -56,6 +58,7 @@ namespace ai
         void Clear();
         bool CanLoot(float maxDistance);
         LootObject GetLoot(float maxDistance = 0);
+        static float GetPickDistance(Player* bot);
 
     private:
         std::vector<LootObject> OrderByDistance(float maxDistance = 0);

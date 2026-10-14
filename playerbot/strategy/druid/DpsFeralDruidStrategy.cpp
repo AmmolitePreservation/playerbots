@@ -1596,7 +1596,15 @@ public:
             (actionName == "set dead state") ||
             (actionName == "update pvp strats") ||
             (actionName == "update pve strats") ||
-            (actionName == "update raid strats"))
+            (actionName == "update raid strats") ||
+            (actionName == "add loot") ||
+            (actionName == "add all loot") ||
+            (actionName == "add gathering loot") ||
+            (actionName == "loot") ||
+            (actionName == "move to loot") ||
+            (actionName == "open loot") ||
+            (actionName == "store loot") ||
+            (actionName == "release loot"))
         {
             return 1.0f;
         }

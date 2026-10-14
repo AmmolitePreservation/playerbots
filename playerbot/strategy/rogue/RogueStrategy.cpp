@@ -1430,6 +1430,14 @@ public:
             (actionName == "check mount state") ||
             (actionName == "loot roll") ||
             (actionName == "auto loot roll") ||
+            (actionName == "add loot") ||
+            (actionName == "add all loot") ||
+            (actionName == "add gathering loot") ||
+            (actionName == "loot") ||
+            (actionName == "move to loot") ||
+            (actionName == "open loot") ||
+            (actionName == "store loot") ||
+            (actionName == "release loot") ||
             (actionName == "attack anything") ||
             (actionName == "choose rpg target") ||
             (actionName == "move to rpg target") ||

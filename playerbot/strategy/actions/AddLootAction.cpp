@@ -107,8 +107,6 @@ bool AddAllLootAction::AddLoot(Player* requester, ObjectGuid guid)
         return false;
     }
 
-    float lootDistanceToUse = sPlayerbotAIConfig.lootDistance;
-
     Group* group = bot->GetGroup();
 
     bool isInGroup = group ? true : false;
@@ -126,27 +124,9 @@ bool AddAllLootAction::AddLoot(Player* requester, ObjectGuid guid)
             ai->TellDebug(requester, "Not master looter.", "debug loot");
             return false;
         }
+    }
 
-        if (ai->IsGroupLeader())
-        {
-            lootDistanceToUse = sPlayerbotAIConfig.lootDistance;
-        }
-        else
-        {
-            if (ai->HasActivePlayerMaster())
-            {
-                lootDistanceToUse = sPlayerbotAIConfig.groupMemberLootDistanceWithActiveMaster;
-            }
-            else
-            {
-                lootDistanceToUse = sPlayerbotAIConfig.groupMemberLootDistance;
-            }
-        }
-    }
-    else
-    {
-        lootDistanceToUse = sPlayerbotAIConfig.lootDistance;
-    }
+    float lootDistanceToUse = LootObjectStack::GetPickDistance(bot);
 
     if (sServerFacade.IsDistanceGreaterThan(sServerFacade.GetDistance2d(requester, wo), lootDistanceToUse))
     {

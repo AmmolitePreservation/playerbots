@@ -3236,6 +3236,19 @@ bool MoveToLootAction::Execute(Event& event)
 
     WorldObject *wo = loot.GetWorldObject(bot);
 
+    // Approach from the bot's side and walk only as far as a path reaches. Where that path ends is where the bot stops: if it
+    // is out of loot range (the loot is above, below or behind something), walking there would end in small steps that never reach it.
+    float x, y, z;
+    wo->GetNearPoint(bot, x, y, z, bot->GetObjectBoundingRadius(), wo->GetObjectBoundingRadius() + sPlayerbotAIConfig.contactDistance, wo->GetAngle(bot));
+    std::vector<WorldPosition> path = WorldPosition(bot).getPathTo(WorldPosition(wo->GetMapId(), x, y, z), bot);
+    if (path.empty() || !LootObject::IsWithinLootRangeFrom(bot, wo, path.back().getX(), path.back().getY(), path.back().getZ()))
+    {
+        ai->TellDebug(GetMaster(), "Can not reach loot " + ChatHelper::formatWorldobject(wo) + ", the nearest place I can walk to is out of range.", "debug loot");
+        AI_VALUE(LootObjectStack*, "available loot")->Remove(loot.guid);
+        RESET_AI_VALUE(LootObject, "loot target");
+        return false;
+    }
+
     if (ai->HasStrategy("debug move", BotState::BOT_STATE_NON_COMBAT) || ai->HasStrategy("debug loot", BotState::BOT_STATE_NON_COMBAT))
     {
         std::ostringstream out;
@@ -3243,10 +3256,7 @@ bool MoveToLootAction::Execute(Event& event)
         ai->TellPlayerNoFacing(GetMaster(), out);
     }
 
-    if(sServerFacade.IsWithinLOSInMap(bot, wo))
-        return MoveNear(wo, sPlayerbotAIConfig.contactDistance);
-
-    return MoveTo(WorldPosition(wo));
+    return MoveTo(wo->GetMapId(), path.back().getX(), path.back().getY(), path.back().getZ());
 }
 
 bool MoveOutOfEnemyContactAction::Execute(Event& event)

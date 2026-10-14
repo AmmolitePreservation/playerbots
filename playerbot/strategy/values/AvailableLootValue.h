@@ -36,10 +36,10 @@ namespace ai
         {
             LootObject loot = AI_VALUE(LootObject, "loot target");
 
-            return !loot.IsEmpty() &&
-                    loot.GetWorldObject(bot) &&    
-                    loot.IsLootPossible(bot) &&
-                    sServerFacade.IsDistanceLessOrEqualThan(AI_VALUE2(float, "distance", "loot target"), INTERACTION_DISTANCE);
+            if (!loot.IsLootPossible(bot))
+                return false;
+
+            return LootObject::IsWithinLootRange(bot, loot.GetWorldObject(bot));
         }
     };
 }
