@@ -3488,6 +3488,36 @@ bool PlayerbotAI::Whisper(std::string msg, std::string receiverName, bool likePl
     return true;
 }
 
+bool PlayerbotAI::TellDebug(Player* player, std::string text, std::string strategy, BotState state)
+{
+    if (!HasStrategy(strategy, state))
+        return false;
+
+    if (strategy == "debug loot")
+    {
+        // Loot checks rerun every few ticks; an unchanged reason is said once per window instead of flooding chat.
+        time_t now = time(0);
+        if (lootDebugSaid.size() > 500)
+            lootDebugSaid.clear();
+
+        time_t& lastSaid = lootDebugSaid[text];
+        if (lastSaid && now - lastSaid < 30)
+            return false;
+        lastSaid = now;
+
+        if (sPlayerbotAIConfig.hasLog("bot_loot.csv"))
+        {
+            std::string quoted = text;
+            for (size_t position = quoted.find('"'); position != std::string::npos; position = quoted.find('"', position + 2))
+                quoted.replace(position, 1, "\"\"");
+
+            sPlayerbotAIConfig.log("bot_loot.csv", "%s+00,%s,\"%s\"", sPlayerbotAIConfig.GetTimestampStr().c_str(), bot->GetName(), quoted.c_str());
+        }
+    }
+
+    return TellPlayerNoFacing(player, text, PlayerbotSecurityLevel::PLAYERBOT_SECURITY_ALLOW_ALL, true, false);
+}
+
 bool PlayerbotAI::TellPlayerNoFacing(Player* player, std::string text, PlayerbotSecurityLevel securityLevel, bool isPrivate, bool noRepeat, bool ignoreSilent)
 {
     if(!player)
