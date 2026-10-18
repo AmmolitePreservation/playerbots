@@ -412,23 +412,41 @@ bool ShouldLootObject::Calculate()
 	if (lootAccess->m_lootMethod != NOT_GROUP_TYPE_LOOT && !lootAccess->m_isChecked) //Open loot once to start rolls.
 		return true;
 
+	bool debug = ai->HasStrategy("debug loot", BotState::BOT_STATE_NON_COMBAT);
+	Loot const* loot = object->m_loot;
+
 	for (auto& lItem : lootAccess->GetLootContentFor(bot))
 	{
 		if (!lItem->itemId)
 			continue;
 
+		ItemQualifier ltemQualifier(lItem);
+		std::string itemText = debug ? std::string(object->GetName()) + ": " + chat->formatItem(ltemQualifier) : std::string();
+
+		if (debug && lItem->GetSlotTypeForSharedLoot(bot, loot) == MAX_LOOT_SLOT_TYPE)
+			ai->TellDebug(ai->GetMaster(), itemText + " is not mine to take.", "debug loot");
+
 		uint32 canLootAmount = AI_VALUE2(uint32, "stack space for item", lItem->itemId);
 
 		if (canLootAmount < lItem->count)
+		{
+			if (debug)
+				ai->TellDebug(ai->GetMaster(), itemText + " does not fit in my bags.", "debug loot");
 			continue;
-
-		ItemQualifier ltemQualifier(lItem);
+		}
 
 		if (lootAccess->m_lootType != LOOT_SKINNING && !StoreLootAction::IsLootAllowed(ltemQualifier, ai))
+		{
+			if (debug)
+				ai->TellDebug(ai->GetMaster(), itemText + " is refused by my loot rules (usage " + std::to_string(uint32(AI_VALUE2(ItemUsage, "item usage", ltemQualifier.GetQualifier()))) + ").", "debug loot");
 			continue;
+		}
 
 		return true;
 	}
+
+	if (debug && lootAccess->m_lootItems.empty())
+		ai->TellDebug(ai->GetMaster(), std::string(object->GetName()) + ": its loot holds no items.", "debug loot");
 
 	return false;
 }

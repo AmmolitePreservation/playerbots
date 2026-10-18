@@ -239,13 +239,23 @@ LootObject::LootObject(const LootObject& other)
 
 bool LootObject::IsLootPossible(Player* bot)
 {
-    if (IsEmpty() || !GetWorldObject(bot))
+    if (IsEmpty())
+        return false;
+
+    WorldObject* worldObject = GetWorldObject(bot);
+    if (!worldObject)
         return false;
 
     PlayerbotAI* ai = bot->GetPlayerbotAI();
+    bool debug = ai->HasStrategy("debug loot", BotState::BOT_STATE_NON_COMBAT);
+    std::string objectName = debug ? std::string(worldObject->GetName()) : std::string();
 
     if (reqItem && !bot->HasItemCount(reqItem, 1))
+    {
+        if (debug)
+            ai->TellDebug(ai->GetMaster(), objectName + ": I lack its key item " + std::to_string(reqItem) + ".", "debug loot");
         return false;
+    }
 
     if (guid.IsCreature())
     {
@@ -254,14 +264,22 @@ bool LootObject::IsLootPossible(Player* bot)
         {
             if (creature->m_loot && skillId != SKILL_SKINNING)
                 if (!creature->m_loot->CanLoot(bot))
+                {
+                    if (debug)
+                        ai->TellDebug(ai->GetMaster(), objectName + ": the server gave me no loot rights when it died.", "debug loot");
                     return false;
+                }
         }
     }
 
     AiObjectContext* context = ai->GetAiObjectContext();
 
     if (!AI_VALUE2(bool, "should loot object", std::to_string(guid.GetRawValue())))
+    {
+        if (debug)
+            ai->TellDebug(ai->GetMaster(), objectName + ": nothing on it I want.", "debug loot");
         return false;
+    }
 
     // Check if the game object has quest loot and bot has the quest for it
     if (guid.IsGameObject())

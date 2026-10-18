@@ -319,10 +319,16 @@ bool StoreLootAction::Execute(Event& event)
 			continue;
 
         if (loot_type != LOOT_SKINNING && !IsLootAllowed(itemQualifier, ai))
+        {
+            ai->TellDebug(ai->GetMaster(), "Opened loot: " + chat->formatItem(itemQualifier) + " is refused by my loot rules.", "debug loot");
             continue;
+        }
 
         if (AI_VALUE2(uint32, "stack space for item", itemid) < itemcount)
+        {
+            ai->TellDebug(ai->GetMaster(), "Opened loot: " + chat->formatItem(itemQualifier) + " does not fit in my bags.", "debug loot");
             continue;
+        }
 
         ItemPrototype const *proto = sItemStorage.LookupEntry<ItemPrototype>(itemid);
         if (!proto)
@@ -335,7 +341,10 @@ bool StoreLootAction::Execute(Event& event)
 
         //have no right to loot
         if (lootItem->isBlocked || lootItem->GetSlotTypeForSharedLoot(bot, loot) == MAX_LOOT_SLOT_TYPE)
+        {
+            ai->TellDebug(ai->GetMaster(), "Opened loot: " + chat->formatItem(itemQualifier) + " is blocked or not mine to take.", "debug loot");
             continue;
+        }
 
         Player* master = ai->GetMaster();
         if (sRandomPlayerbotMgr.IsRandomBot(bot) && master)
