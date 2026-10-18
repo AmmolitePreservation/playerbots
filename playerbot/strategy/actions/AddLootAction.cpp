@@ -91,19 +91,19 @@ bool AddAllLootAction::AddLoot(Player* requester, ObjectGuid guid)
 
     if (loot.IsEmpty())
     {
-        ai->TellDebug(requester, "Loot object is empty.", "debug loot");
+        ai->TellDebug(requester, ChatHelper::formatWorldobject(wo) + ": loot object is empty.", "debug loot");
         return false;
     }
 
     if (abs(wo->GetPositionZ() - bot->GetPositionZ()) > INTERACTION_DISTANCE)
     {
-        ai->TellDebug(requester, "Object too high or low.", "debug loot");
+        ai->TellDebug(requester, ChatHelper::formatWorldobject(wo) + ": too high or low.", "debug loot");
         return false;
     }
 
     if (!loot.IsLootPossible(bot))
     {
-        ai->TellDebug(requester, "Looting is not possible.", "debug loot");
+        ai->TellDebug(requester, ChatHelper::formatWorldobject(wo) + ": looting is not possible.", "debug loot");
         return false;
     }
 
@@ -115,7 +115,7 @@ bool AddAllLootAction::AddLoot(Player* requester, ObjectGuid guid)
 
     if (sServerFacade.IsDistanceGreaterThan(sServerFacade.GetDistance2d(requester, wo), lootDistanceToUse))
     {
-        ai->TellDebug(requester, "Outside of loot range: " + std::to_string(lootDistanceToUse), "debug loot");
+        ai->TellDebug(requester, ChatHelper::formatWorldobject(wo) + ": outside of loot range " + std::to_string(lootDistanceToUse), "debug loot");
         return false;
     }
 
