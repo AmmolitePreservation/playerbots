@@ -292,6 +292,9 @@ bool StoreLootAction::Execute(Event& event)
         bot->GetSession()->HandleLootMoneyOpcode(packet);
     }
 
+    WorldObject* lootSource = ai->GetWorldObject(guid);
+    std::string lootName = lootSource ? LootObject::DebugName(lootSource) : "#" + std::to_string(guid.GetCounter());
+
     for (uint8 i = 0; i < items; ++i)
     {
         uint32 itemid;
@@ -320,13 +323,13 @@ bool StoreLootAction::Execute(Event& event)
 
         if (loot_type != LOOT_SKINNING && !IsLootAllowed(itemQualifier, ai))
         {
-            ai->TellDebug(ai->GetMaster(), "Opened loot: " + chat->formatItem(itemQualifier) + " is refused by my loot rules.", "debug loot");
+            ai->TellDebug(ai->GetMaster(), "Opened " + lootName + ": " + chat->formatItem(itemQualifier) + " is refused by my loot rules.", "debug loot");
             continue;
         }
 
         if (AI_VALUE2(uint32, "stack space for item", itemid) < itemcount)
         {
-            ai->TellDebug(ai->GetMaster(), "Opened loot: " + chat->formatItem(itemQualifier) + " does not fit in my bags.", "debug loot");
+            ai->TellDebug(ai->GetMaster(), "Opened " + lootName + ": " + chat->formatItem(itemQualifier) + " does not fit in my bags.", "debug loot");
             continue;
         }
 
@@ -342,7 +345,7 @@ bool StoreLootAction::Execute(Event& event)
         //have no right to loot
         if (lootItem->isBlocked || lootItem->GetSlotTypeForSharedLoot(bot, loot) == MAX_LOOT_SLOT_TYPE)
         {
-            ai->TellDebug(ai->GetMaster(), "Opened loot: " + chat->formatItem(itemQualifier) + " is blocked or not mine to take.", "debug loot");
+            ai->TellDebug(ai->GetMaster(), "Opened " + lootName + ": " + chat->formatItem(itemQualifier) + " is blocked or not mine to take.", "debug loot");
             continue;
         }
 

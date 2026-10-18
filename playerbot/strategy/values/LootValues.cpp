@@ -422,7 +422,7 @@ bool ShouldLootObject::Calculate()
 			continue;
 
 		ItemQualifier ltemQualifier(lItem);
-		std::string itemText = debug ? std::string(object->GetName()) + ": " + chat->formatItem(ltemQualifier) : std::string();
+		std::string itemText = debug ? LootObject::DebugName(object) + ": " + chat->formatItem(ltemQualifier) : std::string();
 
 		LootSlotType slotType = lItem->GetSlotTypeForSharedLoot(bot, loot);
 		if (slotType != LOOT_SLOT_NORMAL
@@ -462,12 +462,12 @@ bool ShouldLootObject::Calculate()
 	if (holdsTurn)
 	{
 		if (debug)
-			ai->TellDebug(ai->GetMaster(), std::string(object->GetName()) + ": opening it to release the items on my turn.", "debug loot");
+			ai->TellDebug(ai->GetMaster(), LootObject::DebugName(object) + ": opening it to release the items on my turn.", "debug loot");
 		return true;
 	}
 
 	if (debug && lootAccess->m_lootItems.empty())
-		ai->TellDebug(ai->GetMaster(), std::string(object->GetName()) + ": its loot holds no items.", "debug loot");
+		ai->TellDebug(ai->GetMaster(), LootObject::DebugName(object) + ": its loot holds no items.", "debug loot");
 
 	return false;
 }

@@ -12,6 +12,8 @@ namespace ai
         LootObject(Player* bot, ObjectGuid guid);
         LootObject(const LootObject& other);
 
+        static std::string DebugName(const WorldObject* object);
+
     public:
         bool IsEmpty() { return !guid; }
         bool IsLootPossible(Player* bot);
