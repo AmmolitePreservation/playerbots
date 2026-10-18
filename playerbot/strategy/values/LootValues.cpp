@@ -414,6 +414,7 @@ bool ShouldLootObject::Calculate()
 
 	bool debug = ai->HasStrategy("debug loot", BotState::BOT_STATE_NON_COMBAT);
 	Loot const* loot = object->m_loot;
+	bool holdsTurn = false;
 
 	for (auto& lItem : lootAccess->GetLootContentFor(bot))
 	{
@@ -423,8 +424,21 @@ bool ShouldLootObject::Calculate()
 		ItemQualifier ltemQualifier(lItem);
 		std::string itemText = debug ? std::string(object->GetName()) + ": " + chat->formatItem(ltemQualifier) : std::string();
 
-		if (debug && lItem->GetSlotTypeForSharedLoot(bot, loot) == MAX_LOOT_SLOT_TYPE)
-			ai->TellDebug(ai->GetMaster(), itemText + " is not mine to take.", "debug loot");
+		LootSlotType slotType = lItem->GetSlotTypeForSharedLoot(bot, loot);
+		if (slotType != LOOT_SLOT_NORMAL
+#ifndef MANGOSBOT_ZERO
+		    && slotType != LOOT_SLOT_OWNER
+#endif
+		    )
+		{
+			if (debug)
+				ai->TellDebug(ai->GetMaster(), itemText + " is not mine to take.", "debug loot");
+			continue;
+		}
+
+		// An item locked to this bot's looting turn stays locked for the whole group until the bot opens and releases the corpse.
+		if (!lItem->freeForAll && !lItem->isReleased && lootAccess->m_currentLooterGuid == bot->GetObjectGuid())
+			holdsTurn = true;
 
 		uint32 canLootAmount = AI_VALUE2(uint32, "stack space for item", lItem->itemId);
 
@@ -442,6 +456,13 @@ bool ShouldLootObject::Calculate()
 			continue;
 		}
 
+		return true;
+	}
+
+	if (holdsTurn)
+	{
+		if (debug)
+			ai->TellDebug(ai->GetMaster(), std::string(object->GetName()) + ": opening it to release the items on my turn.", "debug loot");
 		return true;
 	}
 
